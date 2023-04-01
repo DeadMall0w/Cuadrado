@@ -40,7 +40,7 @@ public bool isPlaying;
     public void Start ()
 	{
 		Home.SetActive(false);
-		Couleur_Fond.SetActive(false);
+		//Couleur_Fond.SetActive(false);
 		Rejouer_Alea.SetActive(false);
 		Rejouer.SetActive(false);
 		Menu_defaite.SetActive(false);
@@ -54,7 +54,7 @@ public bool isPlaying;
     {
 			Texte_score.gameObject.SetActive(true);
 	Param.SetActive(true);
-	Couleur_Fond.SetActive(true);
+	//Couleur_Fond.SetActive(true);
 	Grille_Parent.gameObject.SetActive(true);
 	if(Seed_random == true)
 	{
@@ -376,7 +376,7 @@ print(Psouris);
 		{
 			Rejouer.SetActive(false);
 			Home.SetActive(false);
-			Couleur_Fond.SetActive(false);
+			//Couleur_Fond.SetActive(false);
 			Rejouer_Alea.SetActive(false);
 			Menu_defaite.SetActive(true);
 			Animation.SetBool("joue_anim",true);
@@ -439,7 +439,7 @@ print(Psouris);
 		Menu_defaite.SetActive(false);
 		Score = 0;
 		Texte_score.text = Score.ToString();
-		Couleur_Fond.SetActive(false);
+		//Couleur_Fond.SetActive(false);
 		for(int cote_x = 0;cote_x < cote;cote_x++)
 		{
 			for(int cote_y = 0;cote_y < cote;cote_y++)
