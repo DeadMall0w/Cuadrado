@@ -40,7 +40,6 @@ public class PlayerMovement : MonoBehaviour
             isclicking = false;
             dstTouch = startPos - currentMousePos;
 
-            print(dstTouch);
             if(!quad.isPlaying){
                 return;
             }

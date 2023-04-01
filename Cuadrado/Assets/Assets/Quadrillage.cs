@@ -32,13 +32,28 @@ public GameObject Home;
 public GameObject Rejouer;
 public GameObject Param;
 public bool isPlaying;
- public Camera Cam2;
- public GameObject Rejouer_Alea;
- public GameObject Couleur_Fond;
- public Transform Grille_Parent;
+public Camera Cam2;
+public GameObject Rejouer_Alea;
+public GameObject Couleur_Fond;
+public Transform Grille_Parent;
+public Color Couleur_jeu, Couleur_menu;
+public GameObject Particule;
+public float Timer = 0;
+public float ClickTimer = 0;
+public bool EstEntrainZoome;
+public float ZoomTimer = 0;
+public Vector3 PositionDeDepart;
+public Vector3 PositionDeZoom;
+public float NiveauDeZoom;
+public bool EstEntrainDezoome;
+public GameObject UI;
+public bool Joue;
 
     public void Start ()
 	{
+		UI.SetActive(true);
+		Particule.SetActive(true);
+		Cam.backgroundColor = Couleur_menu;
 		Home.SetActive(false);
 		//Couleur_Fond.SetActive(false);
 		Rejouer_Alea.SetActive(false);
@@ -52,6 +67,15 @@ public bool isPlaying;
 	}
     public void Commencer()
     {
+		Joue = true;
+		UI.SetActive(true);
+		EstEntrainDezoome = false;
+		EstEntrainDezoome = false;
+		PositionDeDepart = new Vector3(0, (-4.8f+1.05233f*5)+cote*-0.84833f, -10);
+		PositionDeZoom = new Vector3(0, (-4.8f+1.05233f*5)+cote*-0.84833f, -10);
+		NiveauDeZoom = (9-1.8666f*5)+cote*1.8666f;
+		Particule.SetActive(false);
+		Cam.backgroundColor = Couleur_jeu;
 			Texte_score.gameObject.SetActive(true);
 	Param.SetActive(true);
 	//Couleur_Fond.SetActive(true);
@@ -66,11 +90,12 @@ public bool isPlaying;
 	Score = 0;
 	A_deja_clicke = 0;
 	decalage_cote = cote - 1;
-	Cam.orthographicSize = cote;
-	Cam2.orthographicSize = cote;
+	Cam.orthographicSize = (9-1.8666f*5)+cote*1.8666f;
+	Cam.transform.position = new Vector3(0, (-4.8f+1.05233f*5)+cote*-0.84833f, -10);
+	//Cam2.orthographicSize = cote;
 	//Cam.orthographicSize = cote+4+(cote/11);
 	//Cam.transform.position = new Vector3(6.14f + ((49f-14f)/40 * cote), -3.2f - (cote/12f), -10);
-        Grille = new Cellules[cote,cote];
+    Grille = new Cellules[cote,cote];
 	for(int cote_x = 0;cote_x < cote;cote_x++)
 	{
 
@@ -103,13 +128,22 @@ public bool isPlaying;
     void Update()
     {
 	if(A_perdu == true)
-	{
+	{ 
+		Timer += Time.deltaTime;
+		Cam.backgroundColor = Color.Lerp(Couleur_jeu, Couleur_menu, Timer);
 		return;
 	}
-        if(Input.GetMouseButtonDown(0))
-	{
-		Vector3 Psouris = Cam2.ScreenToWorldPoint(Input.mousePosition);
-print(Psouris);
+	if(!Joue){
+		Cam.transform.position = new Vector3(0,0,-10);
+		Cam.orthographicSize = 5;
+	}
+	if(EstEntrainZoome){
+		ZoomTimer += Time.deltaTime;
+		Cam.transform.position = Vector3.Lerp(PositionDeDepart, PositionDeZoom, ZoomTimer);
+		Cam.orthographicSize = Mathf.Lerp(NiveauDeZoom, 9, ZoomTimer);
+		if(ZoomTimer >= 1 && ZoomTimer <=3){
+			if(Input.GetMouseButtonDown(0)){
+				Vector3 Psouris = Cam2.ScreenToWorldPoint(Input.mousePosition);
 		Collider2D[] Collisions = Physics2D.OverlapCircleAll(Psouris,0.1f);
 		if(Collisions.Length > 0)
 		{
@@ -127,6 +161,61 @@ print(Psouris);
 				Defaite();
 			}
 		}
+			}
+		}
+		if(ZoomTimer >= 3){
+			EstEntrainDezoome = true;
+			EstEntrainZoome = false;
+			ZoomTimer = 0;
+		}
+	}else if(EstEntrainDezoome){
+		ZoomTimer += Time.deltaTime;
+		Cam.transform.position = Vector3.Lerp(PositionDeZoom, PositionDeDepart, ZoomTimer);
+		Cam.orthographicSize = Mathf.Lerp(9, NiveauDeZoom, ZoomTimer);
+
+		if(ZoomTimer >= 1){
+			EstEntrainDezoome = false;
+			ZoomTimer = 0;
+			UI.SetActive(true);
+		}
+	}
+
+	if(Input.GetMouseButton(0) && cote > 15){
+		ClickTimer += Time.deltaTime;
+		if(ClickTimer >= 2 && !EstEntrainZoome && !EstEntrainDezoome && Joue){
+			//* ZOOM !
+			EstEntrainZoome = true;
+			PositionDeDepart = Cam.transform.position;
+			PositionDeZoom = Cam.ScreenToWorldPoint(Input.mousePosition);
+			NiveauDeZoom = Cam.orthographicSize;
+			ClickTimer = 0;
+			UI.SetActive(false);
+
+		}
+	}
+	
+        if(Input.GetMouseButtonUp(0))
+		{
+		if(!EstEntrainZoome && !EstEntrainDezoome){
+		Vector3 Psouris = Cam2.ScreenToWorldPoint(Input.mousePosition);
+		Collider2D[] Collisions = Physics2D.OverlapCircleAll(Psouris,0.1f);
+		if(Collisions.Length > 0)
+		{
+			Cellules Click = Collisions[0].GetComponent<Cellules>();
+			Vector3 Positions = Click.Position;
+			if(Click.couleur == 0 && A_deja_clicke == 0)
+			{
+				Grille[Mathf.RoundToInt(Positions.x),Mathf.RoundToInt(Positions.y)].change_couleur(2);
+				A_deja_clicke++;
+				x = Mathf.RoundToInt(Positions.x);
+				y = Mathf.RoundToInt(Positions.y);
+				Score = 1;
+				Texte_score.text = "1";
+				isPlaying = true;
+				Defaite();
+			}
+		}
+	}
 	}
 	if(Input.GetKeyDown(KeyCode.LeftArrow))
 	{
@@ -374,6 +463,11 @@ print(Psouris);
 		}
 		if(A_perdu == true)
 		{
+			UI.SetActive(true);
+			Cam.transform.position = new Vector3(0, 0, -10);
+			Particule.SetActive(true);
+			Cam.orthographicSize = 5;
+			//Cam.backgroundColor = Couleur_menu;
 			Rejouer.SetActive(false);
 			Home.SetActive(false);
 			//Couleur_Fond.SetActive(false);
@@ -383,16 +477,29 @@ print(Psouris);
 			isPlaying = false;
 			Score_final.text = Score.ToString();
 			Grille_Parent.gameObject.SetActive(false);
+			Joue = false;
+			Timer = 0;
+
+			UI.SetActive(true);
+			EstEntrainDezoome = false;
+			EstEntrainDezoome = false;
+			PositionDeDepart = new Vector3(0, (-4.8f+1.05233f*5)+cote*-0.84833f, -10);
+			PositionDeZoom = new Vector3(0, (-4.8f+1.05233f*5)+cote*-0.84833f, -10);
+			NiveauDeZoom = (9-1.8666f*5)+cote*1.8666f;
 		}
 	}
 	public void Reessayer()
 	{
+		UI.SetActive(true);
+		Particule.SetActive(false);
+		Cam.backgroundColor = Couleur_jeu;
 		Seed_random = false;
 		Rejouer_Alea.SetActive(false);
 		A_deja_clicke = 0;
 		A_perdu = false;
 		Menu_defaite.SetActive(false);
 		Score = 0;
+		Joue = true;
 		Texte_score.text = Score.ToString();
 		for(int cote_x = 0;cote_x < cote;cote_x++)
 		{
@@ -406,6 +513,10 @@ print(Psouris);
 
 	public void Reessayer_Aleatoire()
 	{
+		Joue = true;
+		UI.SetActive(true);
+		Particule.SetActive(false);
+		Cam.backgroundColor = Couleur_jeu;
 		Seed_random = true;
 		A_deja_clicke = 0;
 		A_perdu = false;
@@ -427,6 +538,12 @@ print(Psouris);
 	}
 	public void Parametres()
 	{
+		Joue = false;
+		UI.SetActive(true);
+		Cam.transform.position = new Vector3(0,0, -10);
+		Particule.SetActive(true);
+		Cam.orthographicSize = 5;
+		Cam.backgroundColor = Couleur_menu;
 		Texte_score.gameObject.SetActive(false);
 		isPlaying = false;
 		Menu_parametres.SetActive(false);
