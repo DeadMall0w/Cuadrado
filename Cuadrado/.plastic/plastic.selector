@@ -1,0 +1,4 @@
+repository "Cuadrado@Delta_Game_Dev@cloud"
+  path "/"
+    br "/main"
+    co "/main"
